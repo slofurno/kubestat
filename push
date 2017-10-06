@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e
+
+export TAG=$1
+
+if [[ $TAG == "" ]]; then
+  echo "missing version tag"
+  exit 1
+fi
+
+GOOS=linux go build
+
+docker build -t slofurno/kubestat -t slofurno/kubestat:$TAG .
+docker push slofurno/kubestat:$TAG

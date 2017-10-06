@@ -1,0 +1,36 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: kubestat
+spec:
+  selector:
+    matchLabels:
+      name: kubestat
+  template:
+    metadata:
+      labels:
+        name: kubestat
+    spec:
+      volumes:
+        - name: node-meminfo
+          hostPath:
+            path: /proc/meminfo
+        - name: node-stat
+          hostPath:
+            path: /proc/stat
+        - name: node-sys
+          hostPath:
+            path: /sys
+      containers:
+      - name: kubestat
+        image: slofurno/kubestat:v0.1.2
+        command: ["/kubestat"]
+        args: ["--root=/node-sys/fs/cgroup"]
+        volumeMounts:
+          - mountPath: /node-meminfo
+            name: node-meminfo
+          - mountPath: /node-stat
+            name: node-stat
+          - mountPath: /node-sys
+            name: node-sys
+            readOnly: true
