@@ -24,8 +24,8 @@ func main() {
 	for {
 		s.Refresh()
 
-		for _, pod := range s.pods {
-			fmt.Printf("%#v\n", pod)
+		for id, pod := range s.pods {
+			fmt.Printf("[%s] %#v\n", id, pod)
 		}
 
 		time.Sleep(5 * time.Second)
