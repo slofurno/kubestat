@@ -46,6 +46,7 @@ func New(root string) *Stats {
 }
 
 type PodStat struct {
+	//nanoseconds
 	cpuacct_usage    int64
 	cpuacct_usage_d  int64
 	nr_throttled     int64
@@ -53,6 +54,10 @@ type PodStat struct {
 	throttled_time_d int64
 	total_rss        int64
 	total_cache      int64
+
+	//microseconds
+	cpu_cfs_quota_us  int64
+	cpu_cfs_period_us int64
 }
 
 func matchName(n string) bool {
@@ -98,6 +103,18 @@ func (s *Stats) Refresh() {
 					pod.throttled_time_d = throttled_time - pod.throttled_time
 				}
 				pod.throttled_time = throttled_time
+
+				b = base + "/" + x.Name() + "/" + "cpu.cfs_period_us"
+				n, _ = ioutil.ReadFile(b)
+
+				period := strings.Split(string(n), "\n")[0]
+				pod.cpu_cfs_period_us, _ = strconv.ParseInt(period, 10, 64)
+
+				b = base + "/" + x.Name() + "/" + "cpu.cfs_quota_us"
+				n, _ = ioutil.ReadFile(b)
+
+				quota := strings.Split(string(n), "\n")[0]
+				pod.cpu_cfs_quota_us, _ = strconv.ParseInt(quota, 10, 64)
 			}
 		}
 
