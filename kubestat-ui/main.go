@@ -122,11 +122,20 @@ func pushStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/stats", pushStats)
+	mux.HandleFunc("/ws", websocketHandler)
+	mux.Handle("/", http.FileServer(http.Dir("static")))
 
-	http.HandleFunc("/stats", pushStats)
-	http.HandleFunc("/ws", websocketHandler)
-	http.Handle("/", http.FileServer(http.Dir("static")))
-	http.ListenAndServe(":8080", nil)
+	server := &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+		Handler:      mux,
+		Addr:         ":8080",
+	}
+
+	server.ListenAndServe()
 }
 
 type PodStat struct {
