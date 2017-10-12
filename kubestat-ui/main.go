@@ -21,10 +21,12 @@ var upgrader = websocket.Upgrader{
 type Hub struct {
 	connections []*Conn
 	mu          sync.Mutex
+	history     [][]byte
 }
 
 var hub = &Hub{
 	connections: []*Conn{},
+	history:     [][]byte{},
 }
 
 func (s *Hub) Add(conn *Conn) func() {
@@ -51,6 +53,11 @@ func (s *Hub) Broadcast(n []byte) {
 
 	for i := range s.connections {
 		s.connections[i].send <- n
+	}
+
+	s.history = append(s.history, n)
+	if len(s.history) > 300 {
+		s.history = s.history[1:]
 	}
 }
 

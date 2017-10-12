@@ -101,6 +101,8 @@ func (s *Stats) Refresh() {
 					s.pods[x.Name()] = pod
 				}
 
+				pod.Time = time.Now()
+
 				a := base + "/" + x.Name() + "/" + "cpuacct.usage"
 				n, _ := ioutil.ReadFile(a)
 
