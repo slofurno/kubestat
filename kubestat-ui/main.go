@@ -109,16 +109,15 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func pushStats(w http.ResponseWriter, r *http.Request) {
-
-	b, _ := ioutil.ReadAll(r.Body)
+	b, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
-
-	//var stats []PodStat
-	//json.Unmarshal(b, &stats)
-
-	w.Write([]byte("OK"))
+	if err != nil {
+		w.Write([]byte("OK"))
+		return
+	}
 
 	hub.Broadcast(b)
+	w.Write([]byte("OK"))
 }
 
 func main() {
