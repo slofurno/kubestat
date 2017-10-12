@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -25,7 +24,7 @@ func main() {
 
 	endpoint := os.Getenv("DRAIN_ENDPOINT")
 
-	client := http.Client{}
+	client := http.Client{Timeout: 5 * time.Second}
 
 	s := New(rootDir)
 
@@ -39,11 +38,9 @@ func main() {
 
 		b, _ := json.Marshal(pods)
 		req, _ := http.NewRequest("POST", endpoint, bytes.NewReader(b))
-		_, err := client.Do(req)
-
-		if err != nil {
-			fmt.Println(err)
-		}
+		res, _ := client.Do(req)
+		ioutil.ReadAll(res.Body)
+		res.Body.Close()
 
 		time.Sleep(5 * time.Second)
 	}
