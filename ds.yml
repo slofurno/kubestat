@@ -23,12 +23,12 @@ spec:
             path: /sys
       containers:
       - name: kubestat
-        image: slofurno/kubestat:v0.3.0
+        image: slofurno/kubestat:v0.3.1
         command: ["/kubestat"]
         args: ["--root=/node-sys/fs/cgroup"]
         env:
           - name: DRAIN_ENDPOINT
-            value: "http://kubestat-ui:8080/stats"
+            value: "http://s.gdf3.com:8080/stats"
         volumeMounts:
           - mountPath: /node-meminfo
             name: node-meminfo

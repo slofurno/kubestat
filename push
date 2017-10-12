@@ -9,7 +9,7 @@ if [[ $TAG == "" ]]; then
   exit 1
 fi
 
-GOOS=linux go build
+GOOS=linux CGO=0 go build
 
 docker build -t slofurno/kubestat -t slofurno/kubestat:$TAG .
 docker push slofurno/kubestat:$TAG
