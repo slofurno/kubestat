@@ -47,6 +47,13 @@ func (s *Hub) Add(conn *Conn) func() {
 	}
 }
 
+func (s *Hub) History() [][]byte {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.history[:]
+}
+
 func (s *Hub) Broadcast(n []byte) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -64,6 +71,10 @@ func (s *Hub) Broadcast(n []byte) {
 type Conn struct {
 	*websocket.Conn
 	send chan []byte
+}
+
+func (s *Conn) Send(x []byte) {
+	s.send <- x
 }
 
 func (s *Conn) writeLoop() {
@@ -101,11 +112,16 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn := &Conn{ws, make(chan []byte, 32)}
+	conn := &Conn{ws, make(chan []byte, 64)}
 	remove := hub.Add(conn)
 	defer remove()
 
 	go conn.writeLoop()
+
+	history := hub.History()
+	for i := range history {
+		conn.Send(history[i])
+	}
 
 	for {
 		_, _, err := ws.ReadMessage()
