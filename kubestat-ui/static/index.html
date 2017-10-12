@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+           canvas, img {
+            image-rendering: pixelated;
+        }
+        html {
+      box-sizing: border-box;
+  }
+  body {
+    margin: 0px;
+  }
+  *, *:before, *:after {
+      box-sizing: inherit;
+  }
+</style>
+</head>
+<body>
+  <div id="root">
+    <div id="cpu-use" style="padding: 10px;">
+
+    </div>
+
+    <div id="throttled-time" style="padding: 10px;">
+
+    </div>
+
+  </div>
+  <script src="/index.js"></script>
+  <script>
+      let hm = newHeatmap(document.getElementById("cpu-use"), {
+          width: 100,
+          height: 20,
+          scaleY: .05,
+          scaleX: 5000,
+          onclick: (x,y) => console.log(x,y),
+      })
+
+      let thm = newHeatmap(document.getElementById("throttled-time"), {
+          width: 100,
+          height: 20,
+          scaleY: .05,
+          scaleX: 5000,
+          onclick: (x,y) => console.log(x,y),
+      })
+
+      let src = makeFakeSource(50)
+
+      let ws = new WebSocket(`ws://${location.host}/ws`)
+      ws.onmessage = e => {
+        let xs = JSON.parse(e.data)
+        let now = (new Date()).getTime()
+        let d1 = xs.map(x => ([now, x.Cpuacct_usage_d/5000000000]))
+        let d2 = xs.map(x => ([now, x.Throttled_time_d/5000000000]))
+
+        hm.setTime(now + 1)
+        hm.push_back(d1)
+        thm.setTime(now + 1)
+        thm.push_back(d2)
+      }
+
+/*
+      setInterval(() => {
+        let next = src.next()
+        let now = (new Date()).getTime()
+
+        let d1 = next.map(x => ([x.t, x.cpu]))
+        let d2 = next.map(x => ([x.t, x.throttled_time]))
+
+        hm.setTime(now)
+        hm.push_back(d1)
+        thm.setTime(now)
+        thm.push_back(d2)
+      }, 1000)
+      */
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kubestat-ui
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kubestat-ui
+    spec:
+      containers:
+      - name: kubestat-ui
+        image: slofurno/kubestat-ui:v0.3.4
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080

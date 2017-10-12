@@ -1,0 +1,18 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: kubestat-ui
+  labels:
+      app: kubestat-ui
+      dns: route53
+  annotations:
+      domainName: "kubestat.clarityinretail.com"
+spec:
+  type: LoadBalancer
+  selector:
+    app: kubestat-ui
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
