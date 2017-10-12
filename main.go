@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -38,9 +39,13 @@ func main() {
 
 		b, _ := json.Marshal(pods)
 		req, _ := http.NewRequest("POST", endpoint, bytes.NewReader(b))
-		res, _ := client.Do(req)
-		ioutil.ReadAll(res.Body)
-		res.Body.Close()
+		res, err := client.Do(req)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			ioutil.ReadAll(res.Body)
+			res.Body.Close()
+		}
 
 		time.Sleep(5 * time.Second)
 	}
