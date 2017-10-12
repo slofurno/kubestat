@@ -7,7 +7,6 @@ const scale_factor = 8
 function newHeatmap(root, {width, height, onclick, scaleY, scaleX}) {
 
     let series = []
-    let start_ = 0
 
     let buffer = new ArrayBuffer(width * height * 4)
     let writeView = new Uint32Array(buffer)
@@ -52,6 +51,7 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX}) {
     }
 
     function render_() {
+	let start = (((new Date()).getTime() - width * scaleX)/scaleX|0)*scaleX
         let cols = []
 
         for (let j = 0; j < width; j++) {
@@ -61,17 +61,17 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX}) {
         }
 
         let next = []
-        let end = start_ + scaleX * width
+        let end = start + scaleX * width
 
         for (let i = 0; i < series.length; i++) {
           let t = series[i][0]
-          if (t < start_) { continue }
+          if (t < start) { continue }
 
           next.push(series[i])
 
           if (t < end) {
             let h = Math.min((series[i][1]/scaleY)|0, height-1)
-            cols[((t-start_)/scaleX)|0][h]++
+            cols[((t-start)/scaleX)|0][h]++
           }
         }
 
@@ -88,15 +88,7 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX}) {
         ctx.putImageData(imageData, 0, 0)
     }
 
-    function setTime(time) {
-      start_ = time - width * scaleX
-    }
-
-    function getSeries() {
-      return series
-    }
-
-    return {writeView, canvas, destroy, push_back, setTime, getSeries}
+    return {writeView, canvas, destroy, push_back }
 
 }
 

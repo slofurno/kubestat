@@ -56,9 +56,7 @@
         let d1 = xs.map(x => ([now, x.Cpuacct_usage_d/5000000000]))
         let d2 = xs.map(x => ([now, x.Throttled_time_d/5000000000]))
 
-        hm.setTime(now + 1)
         hm.push_back(d1)
-        thm.setTime(now + 1)
         thm.push_back(d2)
       }
 
