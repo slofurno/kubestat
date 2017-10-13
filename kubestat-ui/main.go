@@ -160,20 +160,3 @@ func main() {
 	server.ListenAndServe()
 }
 
-type PodStat struct {
-	Id string
-	//nanoseconds
-	Cpuacct_usage    int64
-	Cpuacct_usage_d  int64
-	Nr_throttled     int64
-	Throttled_time   int64
-	Throttled_time_d int64
-	Total_rss        int64
-	Total_cache      int64
-
-	//microseconds
-	Cpu_cfs_quota_us  int64
-	Cpu_cfs_period_us int64
-
-	Time time.Time
-}

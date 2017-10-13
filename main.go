@@ -74,6 +74,8 @@ type PodStat struct {
 	Throttled_time_d int64
 	Total_rss        int64
 	Total_cache      int64
+	Total_mapped_file int64
+	Hierarchical_memory_limit int64
 
 	//microseconds
 	Cpu_cfs_quota_us  int64
@@ -168,6 +170,12 @@ func (s *Stats) Refresh() {
 
 					case "total_cache":
 						pod.Total_cache, _ = strconv.ParseInt(next[1], 10, 64)
+
+					case "total_mapped_file":
+						pod.Total_mapped_file, _ = strconv.ParseInt(next[1], 10, 64)
+
+					case "hierarchical_memory_limit":
+						pod.Hierarchical_memory_limit, _ = strconv.ParseInt(next[1], 10, 64)
 					}
 
 				}
