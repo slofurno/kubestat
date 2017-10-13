@@ -75,7 +75,7 @@ func main() {
 		pods:   map[string]string{},
 	}
 
-	for i := 0; ; i = (i & 15) + 1 {
+	for i := 0; ; i = (i + 1) & 15 {
 		if i == 0 {
 			nameMap.Refresh()
 		}
