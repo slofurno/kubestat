@@ -11,9 +11,40 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 var rootDir string
+
+type NameMap struct {
+	pods   map[string]string
+	client *kubernetes.Clientset
+}
+
+var nameMap *NameMap
+
+func (s *NameMap) Refresh() {
+	pods, err := s.client.CoreV1().Pods("").List(metav1.ListOptions{})
+	if err != nil {
+		return
+	}
+
+	s.pods = map[string]string{}
+	for i := range pods.Items {
+		uid, name := pods.Items[i].GetUID(), pods.Items[i].GetName()
+		s.pods[string(uid)] = name
+	}
+}
+
+func (s *NameMap) Lookup(uid string) (string, bool) {
+	if name, ok := s.pods[uid]; ok {
+		return name, true
+	}
+	return "", false
+}
 
 func init() {
 	flag.StringVar(&rootDir, "root", "/sys/fs/cgroup", "root directory")
@@ -29,7 +60,25 @@ func main() {
 
 	s := New(rootDir)
 
-	for {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+	// creates the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	nameMap = &NameMap{
+		client: clientset,
+		pods:   map[string]string{},
+	}
+
+	for i := 0; ; i = (i & 15) + 1 {
+		if i == 0 {
+			nameMap.Refresh()
+		}
 		s.Refresh()
 
 		pods := []*PodStat{}
@@ -65,16 +114,17 @@ func New(root string) *Stats {
 }
 
 type PodStat struct {
-	Id string
+	Id   string
+	Name string
 	//nanoseconds
-	Cpuacct_usage    int64
-	Cpuacct_usage_d  int64
-	Nr_throttled     int64
-	Throttled_time   int64
-	Throttled_time_d int64
-	Total_rss        int64
-	Total_cache      int64
-	Total_mapped_file int64
+	Cpuacct_usage             int64
+	Cpuacct_usage_d           int64
+	Nr_throttled              int64
+	Throttled_time            int64
+	Throttled_time_d          int64
+	Total_rss                 int64
+	Total_cache               int64
+	Total_mapped_file         int64
 	Hierarchical_memory_limit int64
 
 	//microseconds
@@ -82,6 +132,9 @@ type PodStat struct {
 	Cpu_cfs_period_us int64
 
 	Time time.Time
+	Dt   time.Duration
+
+	named bool
 }
 
 func matchName(n string) bool {
@@ -99,11 +152,19 @@ func (s *Stats) Refresh() {
 				var pod *PodStat
 				var ok bool
 				if pod, ok = s.pods[x.Name()]; !ok {
-					pod = &PodStat{Id: x.Name()}
+					pod = &PodStat{Id: x.Name()[3:]}
 					s.pods[x.Name()] = pod
 				}
 
+				pod.Dt = time.Since(pod.Time)
 				pod.Time = time.Now()
+
+				if !pod.named {
+					if name, ok := nameMap.Lookup(pod.Id); ok {
+						pod.Name = name
+						pod.named = true
+					}
+				}
 
 				a := base + "/" + x.Name() + "/" + "cpuacct.usage"
 				n, _ := ioutil.ReadFile(a)
