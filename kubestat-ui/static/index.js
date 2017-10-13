@@ -19,6 +19,13 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX}) {
     let ctx = canvas.getContext('2d')
     ctx.strokeStyle = 'white'
 
+    let cols = []
+    for (let j = 0; j < width; j++) {
+        let z = []
+        for (let i = 0; i < height; i++) { z.push([]) }
+        cols.push(z)
+    }
+
     function render() {
         ctx.putImageData(imageData, 0, 0)
     }
@@ -30,11 +37,15 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX}) {
 
     canvas.onclick = function(e) {
         let rect = e.target.getBoundingClientRect();
-        let x = e.clientX - rect.left
-        let y = e.clientY - rect.top
+        let screenX = e.clientX - rect.left
+        let screenY = e.clientY - rect.top
+
+        let x = screenX/scale_factor|0
+        let y = screenY/scale_factor|0
+
 
         if (typeof onclick === 'function') {
-            onclick(x/scale_factor|0, y/scale_factor|0)
+            onclick(cols[x][height - 1 - y], screenX, screenY)
         }
     }
 
@@ -51,17 +62,15 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX}) {
     }
 
     function render_() {
-	let start = (((new Date()).getTime() - width * scaleX)/scaleX|0)*scaleX
-        let cols = []
-
-        for (let j = 0; j < width; j++) {
-          let z = []
-          for (let i = 0; i < height; i++) { z.push(0) }
-          cols.push(z)
-        }
-
-        let next = []
+        let start = (((new Date()).getTime() - width * scaleX)/scaleX|0)*scaleX
         let end = start + scaleX * width
+        let next = []
+
+        for (let i = 0; i < width; i++) {
+            for (let j = 0; j < height; j++) {
+                cols[i][j] = []
+            }
+        }
 
         for (let i = 0; i < series.length; i++) {
           let t = series[i][0]
@@ -71,16 +80,16 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX}) {
 
           if (t < end) {
             let h = Math.min((series[i][1]/scaleY)|0, height-1)
-            cols[((t-start)/scaleX)|0][h]++
+            cols[((t-start)/scaleX)|0][h].push(series[i])
           }
         }
 
         let ranks = mergeranks(cols)
-        for (let i = 0; i < cols.length; i++){
+        for (let i = 0; i < width; i++){
             let col = cols[i]
-            for(let j = 0; j < col.length; j++){
+            for(let j = 0; j < height; j++){
                 let k = (height - 1 - j) * width + i
-                writeView[k] = toColor(ranks[col[j]])
+                writeView[k] = toColor(ranks[col[j].length])
             }
         }
 
@@ -97,9 +106,10 @@ function mergeranks(xxs) {
     let ys = []
     xxs.forEach(xs =>{
         xs.forEach(x => {
-            if (!seen[x]) {
-                seen[x] = 1
-                ys.push(x)
+            let k = x.length
+            if (!seen[k]) {
+                seen[k] = 1
+                ys.push(k)
             }
         })
     })

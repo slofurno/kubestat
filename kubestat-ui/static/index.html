@@ -29,7 +29,7 @@
     </div>
 
   </div>
-  <script src="/index.js"></script>
+  <script src="index.js"></script>
   <script>
       function getTime(x) {
 	let d = new Date(x)
@@ -40,7 +40,7 @@
           height: 20,
           scaleY: .05,
           scaleX: 5000,
-          onclick: (x,y) => console.log(x,y),
+          onclick: (z,x,y) => console.log(z),
       })
 
       let thm = newHeatmap(document.getElementById("throttled-time"), {
@@ -48,7 +48,7 @@
           height: 20,
           scaleY: .05,
           scaleX: 5000,
-          onclick: (x,y) => console.log(x,y),
+          onclick: (z,x,y) => console.log(z),
       })
 
       let src = makeFakeSource(50)
@@ -57,8 +57,8 @@
       ws.onmessage = e => {
         let xs = JSON.parse(e.data)
         let now = (new Date()).getTime()
-        let d1 = xs.map(x => ([getTime(x.Time), x.Cpuacct_usage_d/5000000000]))
-        let d2 = xs.map(x => ([getTime(x.Time), x.Throttled_time_d/5000000000]))
+        let d1 = xs.map(x => ([getTime(x.Time), x.Cpuacct_usage_d/5000000000, x.Id]))
+        let d2 = xs.map(x => ([getTime(x.Time), x.Throttled_time_d/5000000000, x.Id]))
 
         hm.push_back(d1)
         thm.push_back(d2)
