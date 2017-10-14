@@ -2,7 +2,7 @@ function pack(r,g,b,a) {
     return (a << 24) | (b << 16) | (g << 8) | r
 }
 
-const scale_factor = 8
+const scale_factor = 10
 
 function newHeatmap(root, {width, height, onclick, scaleY, scaleX}) {
 
@@ -25,12 +25,6 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX}) {
         for (let i = 0; i < height; i++) { z.push([]) }
         cols.push(z)
     }
-
-    function render() {
-        ctx.putImageData(imageData, 0, 0)
-    }
-
-    render()
 
     canvas.style.width = scale_factor * width + "px"
     canvas.style.height = scale_factor * height + "px"
@@ -84,9 +78,11 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX}) {
           }
         }
 
-        let ranks = mergeranks(cols)
+        //let ranks = rankedsaturation(cols)
         for (let i = 0; i < width; i++){
             let col = cols[i]
+            let ranks = ranksaturation(col)
+
             for(let j = 0; j < height; j++){
                 let k = (height - 1 - j) * width + i
                 writeView[k] = toColor(ranks[col[j].length])
@@ -98,11 +94,10 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX}) {
     }
 
     return {writeView, canvas, destroy, push_back }
-
 }
 
-function mergeranks(xxs) {
-    let seen = {}
+function rankedsaturation(xxs) {
+    let seen = {0: -1}
     let ys = []
     xxs.forEach(xs =>{
         xs.forEach(x => {
@@ -114,57 +109,49 @@ function mergeranks(xxs) {
         })
     })
 
-    ys.sort()
-    ys.forEach((y,i) => seen[y] = i / ys.length)
+    ys.sort((a,b) => a-b)
+    ys.forEach((y,i) => seen[y] = i / (ys.length-1))
+    console.log(ys, seen)
     return seen
 }
 
-function makeFakeSource(n) {
-    let pods = []
-
-    for (let i = 0; i<n; i++) {
-        let period = Math.random() * 20000 + 2000
-        let seed = Math.random()
-        let A = Math.random() * 0.1 + (seed > 0.8 ? 0.7 : 0.2)
-        let cpu = 0
-
-        pods.push({id: i, A, period, cpu, phase: seed * Math.PI * 2, base: seed})
-    }
-
-    function next() {
-        let time = (new Date()).getTime()
-        let ret = []
-        let avail = 8
-        let need = 0
-
-        for (let i = 0; i < n; i++) {
-            let p = pods[i]
-            p.cpu += 0.5 * (p.A + p.A * Math.cos(time/p.period + p.phase))
-            need += p.cpu
+function ranksaturation(xs) {
+    let seen = {0: -1}
+    let ys = []
+    xs.forEach(x => {
+        let k = x.length
+        if (!seen[k]) {
+            seen[k] = 1
+            ys.push(k)
         }
+    })
 
-        for (let i = 0; i < n; i++) {
-            let p = pods[i]
-
-            let cpu = need > avail ? p.cpu * (avail/need) : p.cpu
-            p.cpu -= Math.min(0.95, cpu)
-            let t = time + (Math.random() * 50 - 25 | 0)
-
-            ret.push({cpu, throttled_time: p.cpu, t})
-        }
-
-        return ret
-    }
-
-    return {
-        next,
-    }
+    ys.sort((a,b) => a-b)
+    ys.forEach((y,i) => seen[y] = i / (ys.length-1))
+    return seen
 }
+
+function linearsaturation(xxs) {
+    let seen = {}
+    let max = 0
+    for (let j = 0; j < xxs.length; j++){
+        for(let i = 0; i < xxs[j].length; i++) {
+            let k = xxs[j][i].length
+            seen[k] = 1
+            max = k > max ? k : max
+        }
+    }
+
+    Object.keys(seen).forEach(x => seen[x] = x/max)
+    return seen
+}
+
+
+const offwhite = pack(245, 245, 245, 255)
 
 function toColor(percent) {
-    return hslToRgb(0, 0.95 * percent, 120/255)
+    return percent === -1 ? offwhite : hslToRgb(0, percent, 0.6)
 }
-
 
 function hslToRgb(h, s, l){
     var r, g, b;
@@ -188,9 +175,5 @@ function hslToRgb(h, s, l){
         b = hue2rgb(p, q, h - 1/3);
     }
 
-    //return [r * 255, g * 255, b * 255];
     return pack(r*255, g*255, b*255, 255)
 }
-
-//ws:///${location.host}/ws
-

@@ -30,40 +30,41 @@
   <script>
       let pods = {}
       function getTime(x) {
-	let d = new Date(x)
-	return d.getTime()
+	      let d = new Date(x)
+	      return d.getTime()
       }
+      let onclick = (xs) => xs.forEach(x => console.log(x))
       let hm = newHeatmap(document.getElementById("cpu-use"), {
           width: 100,
-          height: 20,
+          height: 10,
           scaleY: .05,
           scaleX: 5000,
-          onclick: (z,x,y) => console.log(z),
+          onclick: onclick,
       })
 
       let thm = newHeatmap(document.getElementById("throttled-time"), {
           width: 100,
-          height: 20,
+          height: 10,
           scaleY: .05,
           scaleX: 5000,
-          onclick: (z,x,y) => console.log(z),
+          onclick: onclick,
       })
 
       let rs = newHeatmap(document.getElementById("resident"), {
           width: 100,
           height: 20,
-          scaleY: 50,
+          scaleY: 25,
           scaleX: 5000,
-          onclick: (z,x,y) => console.log(z),
+          onclick: onclick,
       })
 
-      let ws = new WebSocket(`ws://${location.host}/ws`)
+      let ws = new WebSocket(`ws://s.gdf3.com:8080/ws`)
       ws.onmessage = e => {
         let xs = JSON.parse(e.data)
 
 	xs.forEach(x => pods[x.Name] = x)
-        let d1 = xs.map(x => ([getTime(x.Time), x.Cpuacct_usage_d/5000000000, x.Name]))
-        let d2 = xs.map(x => ([getTime(x.Time), x.Throttled_time_d/5000000000, x.Name]))
+        let d1 = xs.map(x => ([getTime(x.Time), x.Cpuacct_usage_d/x.Dt, x.Name]))
+        let d2 = xs.map(x => ([getTime(x.Time), x.Throttled_time_d/x.Dt, x.Name]))
         let d3 = xs.map(x => ([getTime(x.Time), (x.Total_rss + (x.Total_mapped_file||0))/1000000, x.Name]))
 
         hm.push_back(d1)
