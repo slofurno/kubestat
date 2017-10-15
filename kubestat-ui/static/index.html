@@ -4,17 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-           canvas, img {
-            image-rendering: pixelated;
-        }
-        html {
-      box-sizing: border-box;
+  canvas, img {
+    image-rendering:optimizeSpeed;             /* Legal fallback */
+    image-rendering:-moz-crisp-edges;          /* Firefox        */
+    image-rendering:-o-crisp-edges;            /* Opera          */
+    image-rendering:-webkit-optimize-contrast; /* Safari         */
+    image-rendering:optimize-contrast;         /* CSS3 Proposed  */
+    image-rendering:crisp-edges;               /* CSS4 Proposed  */
+    image-rendering:pixelated;                 /* CSS4 Proposed  */
+    -ms-interpolation-mode:nearest-neighbor;   /* IE8+           */
+  }
+  html {
+    box-sizing: border-box;
   }
   body {
     margin: 0px;
   }
   *, *:before, *:after {
-      box-sizing: inherit;
+    box-sizing: inherit;
   }
 </style>
 </head>
@@ -33,7 +40,7 @@
 	      let d = new Date(x)
 	      return d.getTime()
       }
-      let onclick = (xs) => xs.forEach(x => console.log(x))
+      let onclick = (xs) => xs.forEach(([t,y,p]) => console.log("%s: %f (%s)", p, y, humanTime(t)))
       let hm = newHeatmap(document.getElementById("cpu-use"), {
           width: 100,
           height: 10,
@@ -61,8 +68,8 @@
       let ws = new WebSocket(`ws://s.gdf3.com:8080/ws`)
       ws.onmessage = e => {
         let xs = JSON.parse(e.data)
-
-	xs.forEach(x => pods[x.Name] = x)
+        xs.forEach(x => pods[x.Name] = x)
+        
         let d1 = xs.map(x => ([getTime(x.Time), x.Cpuacct_usage_d/x.Dt, x.Name]))
         let d2 = xs.map(x => ([getTime(x.Time), x.Throttled_time_d/x.Dt, x.Name]))
         let d3 = xs.map(x => ([getTime(x.Time), (x.Total_rss + (x.Total_mapped_file||0))/1000000, x.Name]))
@@ -70,6 +77,13 @@
         hm.push_back(d1)
         thm.push_back(d2)
         rs.push_back(d3)
+      }
+
+
+      function humanTime(n) {
+        const minute = 1000*60
+        let dt = Date.now() - n
+        return (dt/minute|0) + " minutes ago"
       }
 
   </script>
