@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"flag"
 
 	"github.com/gorilla/websocket"
 )
@@ -143,6 +144,13 @@ func pushStats(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
 
+var port string
+
+func init() {
+	flag.StringVar(&port, "port", "8080", "port")
+	flag.Parse()
+}
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/stats", pushStats)
@@ -154,7 +162,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 		Handler:      mux,
-		Addr:         ":8080",
+		Addr:         ":"+port,
 	}
 
 	server.ListenAndServe()

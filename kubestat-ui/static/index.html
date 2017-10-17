@@ -65,7 +65,7 @@
           onclick: onclick,
       })
 
-      let ws = new WebSocket(`ws://s.gdf3.com:8080/ws`)
+      let ws = new WebSocket(`ws://${location.host}/ws`)
       ws.onmessage = e => {
         let xs = JSON.parse(e.data)
         xs.forEach(x => pods[x.Name] = x)
