@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"sync"
 	"time"
-	"flag"
 
 	"github.com/gorilla/websocket"
 )
@@ -142,9 +144,20 @@ func pushStats(w http.ResponseWriter, r *http.Request) {
 
 	hub.Broadcast(b)
 	w.Write([]byte("OK"))
+
+	var xs []PodStat
+	if err := json.Unmarshal(b, &xs); err != nil {
+		log.Println(err)
+		return
+	}
+
+	if err := store.Put(xs); err != nil {
+		log.Println(err)
+	}
 }
 
 var port string
+var store *Store
 
 func init() {
 	flag.StringVar(&port, "port", "8080", "port")
@@ -152,6 +165,12 @@ func init() {
 }
 
 func main() {
+	var err error
+	store, err = NewPostgresStore("postgres://postgres:postgres@localhost/postgres?sslmode=disable")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/stats", pushStats)
 	mux.HandleFunc("/ws", websocketHandler)
@@ -162,9 +181,8 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 		Handler:      mux,
-		Addr:         ":"+port,
+		Addr:         ":" + port,
 	}
 
 	server.ListenAndServe()
 }
-

@@ -1,0 +1,67 @@
+package main
+
+import (
+	"database/sql"
+	"time"
+
+	_ "github.com/lib/pq"
+)
+
+type PodStat struct {
+	Id   string
+	Name string
+	//nanoseconds
+	Cpuacct_usage             int64
+	Cpuacct_usage_d           int64
+	Nr_throttled              int64
+	Throttled_time            int64
+	Throttled_time_d          int64
+	Total_rss                 int64
+	Total_cache               int64
+	Total_mapped_file         int64
+	Hierarchical_memory_limit int64
+
+	//microseconds
+	Cpu_cfs_quota_us  int64
+	Cpu_cfs_period_us int64
+
+	Time time.Time
+	Dt   time.Duration
+
+	named bool
+}
+
+type Store struct {
+	db *sql.DB
+}
+
+func (s *Store) Put(xs []PodStat) error {
+	query := `insert into podstat (time, dt, name, cpuacct_usage_d, throttled_time_d, total_rss, total_cache, 
+		total_mapped_file, memory_limit) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+
+	for i := range xs {
+		if _, err := s.db.Exec(query, xs[i].Time, xs[i].Dt, xs[i].Name, xs[i].Cpuacct_usage_d, xs[i].Throttled_time_d,
+			xs[i].Total_rss, xs[i].Total_cache, xs[i].Total_mapped_file, xs[i].Hierarchical_memory_limit); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func NewPostgresStore(cs string) (*Store, error) {
+	var db *sql.DB
+	var err error
+	//connStr := "postgres://pqgotest:password@localhost/pqgotest?sslmode=verify-full"
+	if db, err = sql.Open("postgres", cs); err != nil {
+		return nil, err
+	}
+
+	if err = db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return &Store{
+		db: db,
+	}, nil
+}
