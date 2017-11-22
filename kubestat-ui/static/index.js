@@ -4,7 +4,7 @@ function pack(r,g,b,a) {
 
 const scale_factor = 10
 
-function newHeatmap(root, {width, height, onclick, scaleY, scaleX}) {
+function newHeatmap(root, {width, height, onclick, scaleY, scaleX, historical}) {
 
     let series = []
 
@@ -56,7 +56,10 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX}) {
     }
 
     function render_() {
-        let start = (((new Date()).getTime() - width * scaleX)/scaleX|0)*scaleX
+        let start = historical
+          ? minimumTime(series)
+          : (((new Date()).getTime() - width * scaleX)/scaleX|0)*scaleX
+
         let end = start + scaleX * width
         let next = []
 
@@ -176,4 +179,14 @@ function hslToRgb(h, s, l){
     }
 
     return pack(r*255, g*255, b*255, 255)
+}
+
+function minimumTime(xs) {
+  let t0 = Date.now()
+  for (let i = 0; i < xs.length; i++) {
+    if (xs[i][0] < t0) {
+      t0 = xs[i][0]
+    }
+  }
+  return t0
 }
