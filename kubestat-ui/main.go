@@ -166,11 +166,15 @@ func getPodStats(w http.ResponseWriter, r *http.Request) {
 
 	xs, err := store.Get(q)
 	if err != nil {
-		w.WriteHeader(501)
+		log.Println(err)
+		w.WriteHeader(503)
 		return
 	}
 
-	b, _ := json.Marshal(xs)
+	b, err  := json.Marshal(xs)
+	if err != nil {
+		log.Println(err)
+	}
 	w.Write(b)
 }
 
