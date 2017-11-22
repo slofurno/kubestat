@@ -136,11 +136,11 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 
 func pushStats(w http.ResponseWriter, r *http.Request) {
 	b, err := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
 	if err != nil {
 		w.Write([]byte("OK"))
 		return
 	}
+	defer r.Body.Close()
 
 	hub.Broadcast(b)
 	w.Write([]byte("OK"))
@@ -154,6 +154,24 @@ func pushStats(w http.ResponseWriter, r *http.Request) {
 	if err := store.Put(xs); err != nil {
 		log.Println(err)
 	}
+}
+
+func getPodStats(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	q := PodStatQuery{
+		start: query.Get("start"),
+		end:   query.Get("end"),
+		name:  query.Get("name"),
+	}
+
+	xs, err := store.Get(q)
+	if err != nil {
+		w.WriteHeader(501)
+		return
+	}
+
+	b, _ := json.Marshal(xs)
+	w.Write(b)
 }
 
 var port string
@@ -174,6 +192,8 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/stats", pushStats)
 	mux.HandleFunc("/ws", websocketHandler)
+	mux.HandleFunc("/api/stats", getPodStats)
+
 	mux.Handle("/", http.FileServer(http.Dir("static")))
 
 	server := &http.Server{

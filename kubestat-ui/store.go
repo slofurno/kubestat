@@ -35,8 +35,47 @@ type Store struct {
 	db *sql.DB
 }
 
+type PodStatQuery struct {
+	start string
+	end   string
+	name  string
+}
+
+const podstatfields = `time, dt, name, cpuacct_usage_d, throttled_time_d, total_rss, total_cache, total_mapped_file, memory_limit`
+
+func (s *Store) Get(q PodStatQuery) ([]*PodStat, error) {
+	query := `select ` + podstatfields + ` from podstat where time between now() - interval '$1' and now() - interval '$2'`
+	rows, err := s.db.Query(query, q.start, q.end)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	ret := []*PodStat{}
+	for rows.Next() {
+		p := &PodStat{}
+		if err := rows.Scan(
+			&p.Time,
+			&p.Dt,
+			&p.Name,
+			&p.Cpuacct_usage_d,
+			&p.Throttled_time_d,
+			&p.Total_rss,
+			&p.Total_cache,
+			&p.Total_mapped_file,
+			&p.Hierarchical_memory_limit,
+		); err != nil {
+			return nil, err
+		}
+
+		ret = append(ret, p)
+	}
+
+	return ret, nil
+}
+
 func (s *Store) Put(xs []PodStat) error {
-	query := `insert into podstat (time, dt, name, cpuacct_usage_d, throttled_time_d, total_rss, total_cache, 
+	query := `insert into podstat (time, dt, name, cpuacct_usage_d, throttled_time_d, total_rss, total_cache,
 		total_mapped_file, memory_limit) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
 	for i := range xs {
@@ -52,7 +91,7 @@ func (s *Store) Put(xs []PodStat) error {
 func NewPostgresStore(cs string) (*Store, error) {
 	var db *sql.DB
 	var err error
-	//connStr := "postgres://pqgotest:password@localhost/pqgotest?sslmode=verify-full"
+
 	if db, err = sql.Open("postgres", cs); err != nil {
 		return nil, err
 	}
