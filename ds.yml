@@ -1,7 +1,8 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 kind: DaemonSet
 metadata:
   name: kubestat
+  namespace: kube-system
 spec:
   selector:
     matchLabels:
@@ -11,6 +12,9 @@ spec:
       labels:
         name: kubestat
     spec:
+      tolerations:
+        - key: "target"
+          operator: "Exists"
       volumes:
         - name: node-meminfo
           hostPath:
@@ -28,7 +32,7 @@ spec:
         args: ["--root=/node-sys/fs/cgroup"]
         env:
           - name: DRAIN_ENDPOINT
-            value: "http://s.gdf3.com:8080/stats"
+            value: "http://s.gdf3.com:9090/stats"
         volumeMounts:
           - mountPath: /node-meminfo
             name: node-meminfo
