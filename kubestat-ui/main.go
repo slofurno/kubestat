@@ -13,6 +13,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+var incoming = make(chan []byte, 4096)
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -134,26 +136,23 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+var qp int = 0
+
 func pushStats(w http.ResponseWriter, r *http.Request) {
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		w.Write([]byte("OK"))
-		return
-	}
 	defer r.Body.Close()
-
-	hub.Broadcast(b)
-	w.Write([]byte("OK"))
-
-	var xs []PodStat
-	if err := json.Unmarshal(b, &xs); err != nil {
-		log.Println(err)
+	b, err := ioutil.ReadAll(r.Body)
+	if err == nil {
+		select {
+		case incoming <- b:
+		default:
+			if qp++; qp&31 == 0 {
+				log.Printf("incoming queue full\n")
+			}
+		}
 		return
 	}
 
-	if err := store.Put(xs); err != nil {
-		log.Println(err)
-	}
+	w.Write([]byte("OK"))
 }
 
 func getPodStats(w http.ResponseWriter, r *http.Request) {
@@ -171,7 +170,7 @@ func getPodStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err  := json.Marshal(xs)
+	b, err := json.Marshal(xs)
 	if err != nil {
 		log.Println(err)
 	}
@@ -192,6 +191,22 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	go func() {
+		for b := range incoming {
+			var xs []PodStat
+			if err := json.Unmarshal(b, &xs); err != nil {
+				log.Println(err)
+				return
+			}
+
+			hub.Broadcast(b)
+
+			if err := store.Put(xs); err != nil {
+				log.Println(err)
+			}
+		}
+	}()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/stats", pushStats)
