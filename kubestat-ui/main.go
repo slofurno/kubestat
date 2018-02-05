@@ -212,6 +212,15 @@ func main() {
 	mux.HandleFunc("/stats", pushStats)
 	mux.HandleFunc("/ws", websocketHandler)
 	mux.HandleFunc("/api/stats", getPodStats)
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		b, _ := json.Marshal(struct {
+			Incoming int
+		}{
+			Incoming: len(incoming),
+		})
+
+		w.Write(b)
+	})
 
 	mux.Handle("/", http.FileServer(http.Dir("static")))
 
