@@ -44,8 +44,8 @@ type PodStatQuery struct {
 const podstatfields = `time, dt, name, cpuacct_usage_d, throttled_time_d, total_rss, total_cache, total_mapped_file, memory_limit`
 
 func (s *Store) Get(q PodStatQuery) ([]*PodStat, error) {
-	query := `select ` + podstatfields + ` from podstat where time >= now() - $1::INTERVAL and time < now() - $2::INTERVAL`
-	rows, err := s.db.Query(query, q.start, q.end)
+	query := `select ` + podstatfields + ` from podstat where time >= now() - $1::INTERVAL and time < now() - $2::INTERVAL and name like $3`
+	rows, err := s.db.Query(query, q.start, q.end, q.name+"%")
 	if err != nil {
 		return nil, err
 	}
