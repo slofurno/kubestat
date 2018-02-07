@@ -36,8 +36,8 @@ type Store struct {
 }
 
 type PodStatQuery struct {
-	start string
-	end   string
+	start int
+	end   int
 	name  string
 }
 

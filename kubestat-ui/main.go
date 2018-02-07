@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -157,9 +158,13 @@ func pushStats(w http.ResponseWriter, r *http.Request) {
 
 func getPodStats(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
+
+	start, _ := strconv.Atoi(query.Get("start"))
+	end, _ := strconv.Atoi(query.Get("end"))
+
 	q := PodStatQuery{
-		start: query.Get("start"),
-		end:   query.Get("end"),
+		start: start,
+		end:   end,
 		name:  query.Get("name"),
 	}
 
