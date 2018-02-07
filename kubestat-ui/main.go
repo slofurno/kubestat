@@ -230,8 +230,8 @@ func main() {
 	mux.Handle("/", http.FileServer(http.Dir("static")))
 
 	server := &http.Server{
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  60 * time.Second,
+		WriteTimeout: 60 * time.Second,
 		IdleTimeout:  120 * time.Second,
 		Handler:      mux,
 		Addr:         ":" + port,
