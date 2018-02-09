@@ -41,13 +41,6 @@
 	      return d.getTime()
       }
       let onclick = (xs) => xs.forEach(([t,y,p]) => console.log("%s: %f (%s)", p, y, humanTime(t)))
-      let hm = newHeatmap(document.getElementById("cpu-use"), {
-          width: 100,
-          height: 20,
-          scaleY: .1,
-          scaleX: 5000,
-          onclick: onclick,
-      })
 
       let thm = newHeatmap(document.getElementById("throttled-time"), {
           width: 100,
@@ -69,7 +62,7 @@
       ws.onmessage = e => {
         let xs = JSON.parse(e.data)
         xs.forEach(x => pods[x.Name] = x)
-        
+
         let d1 = xs.map(x => ([getTime(x.Time), x.Cpuacct_usage_d/x.Dt, x.Name]))
         let d2 = xs.map(x => ([getTime(x.Time), x.Throttled_time_d/x.Dt, x.Name]))
         let d3 = xs.map(x => ([getTime(x.Time), (x.Total_rss + (x.Total_mapped_file||0))/1000000, x.Name]))
@@ -78,6 +71,23 @@
         thm.push_back(d2)
         rs.push_back(d3)
       }
+
+      ;(async function() {
+
+        let xs = await fetch("/api/stats?start=172800").then(res => res.json())
+        let cpus = xs.map(x => ([getTime(x.Time), (x.Total_rss + (x.Total_mapped_file||0))/1000000, x.Name]))
+
+        let cpu = newHeatmap(document.getElementById("cpu-use"), {
+          width: 100,
+          height: 20,
+          scaleY: 500,
+          scaleX: 7200000,
+          onclick: onclick,
+        })
+
+        cpu.push_back(cpus)
+
+      })()
 
 
       function humanTime(n) {
