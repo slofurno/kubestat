@@ -81,9 +81,10 @@
           onclick: onclick,
         })
 
+  let t = Math.floor(Date.now()/1000)
 	try {
-	  for (var dt = 0; dt <= 600000; dt += 40000) {
-	    let xs = await fetch(`/api/stats?start=${dt+40000}&end=${dt}`).then(res => res.json())
+	  for (var i = 0; i < 16; t-=40000, i++) {
+	    let xs = await fetch(`/api/stats?start=${t-40000}&end=${t}`).then(res => res.json())
             let cpus = xs.map(x => ([getTime(x.Time), (x.Total_rss + (x.Total_mapped_file||0))/1000000, x.Name]))
             cpu.push_back(cpus)
 	  }
