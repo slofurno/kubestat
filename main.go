@@ -142,8 +142,8 @@ func matchName(n string) bool {
 }
 
 func (s *Stats) Refresh() {
-	for _, b := range []string{"burstable", "besteffort"} {
-		base := s.root + "/cpu/kubepods/" + b
+	for _, b := range []string{"/burstable", "/besteffort", ""} {
+		base := s.root + "/cpu/kubepods" + b
 		xs, _ := ioutil.ReadDir(base)
 
 		for _, x := range xs {

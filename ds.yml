@@ -27,7 +27,7 @@ spec:
             path: /sys
       containers:
       - name: kubestat
-        image: slofurno/kubestat:v0.5.1
+        image: slofurno/kubestat:v0.5.2
         command: ["/kubestat"]
         args: ["--root=/node-sys/fs/cgroup"]
         env:
