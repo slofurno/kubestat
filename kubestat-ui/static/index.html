@@ -36,11 +36,15 @@
   <script src="index.js"></script>
   <script>
       let pods = {}
+      const nameLookup = {}
+      const names = []
+
       function getTime(x) {
+        return x;
 	      let d = new Date(x)
 	      return d.getTime()
       }
-      let onclick = (xs) => xs.slice(0,20).forEach(([t,y,p]) => console.log("%s: %f (%s)", p, y, humanTime(t)))
+      let onclick = (xs) => xs.slice(0,20).forEach(([t,y,p]) => console.log("%s: %f (%s)", names[p], y, humanTime(t)))
 
       let thm = newHeatmap(document.getElementById("throttled-time"), {
           width: 100,
@@ -81,17 +85,21 @@
           onclick: onclick,
         })
 
+  var nn;
+
   let t = Math.floor(Date.now()/1000)
-	try {
-	  for (var i = 0; i < 16; t-=40000, i++) {
-	    let xs = await fetch(`/api/stats?start=${t-40000}&end=${t}`).then(res => res.json())
-            let cpus = xs.map(x => ([getTime(x.Time), (x.Total_rss + (x.Total_mapped_file||0))/1000000, x.Name]))
-            cpu.push_back(cpus)
+	  for (var i = 0; i < 64; t-=10000, i++) {
+	    let xs = await fetch(`/api/stats?start=${t-10000}&end=${t}`).then(res => res.json())
+        let cpus = xs.map(x => {
+          if (!(nn = nameLookup[x.Name])) {
+            nn = names.push(x.Name) - 1
+            nameLookup[x.Name] = nn
+          }
+          return [getTime(x.Time), (x.Total_rss + (x.Total_mapped_file||0))/1000000, nn]
+        })
+      cpu.push_back(cpus)
 	  }
 
-	} catch (e) {
-	  console.error(e)
-	}
 
 
 

@@ -41,9 +41,33 @@ type PodStatQuery struct {
 	name  string
 }
 
-const podstatfields = `time, dt, name, cpuacct_usage_d, throttled_time_d, total_rss, total_cache, total_mapped_file, memory_limit`
+type podStat struct {
+	Id   string
+	Name string
+	//nanoseconds
+	Cpuacct_usage             int64
+	Cpuacct_usage_d           int64
+	Nr_throttled              int64
+	Throttled_time            int64
+	Throttled_time_d          int64
+	Total_rss                 int64
+	Total_cache               int64
+	Total_mapped_file         int64
+	Hierarchical_memory_limit int64
 
-func (s *Store) Get(q PodStatQuery) ([]*PodStat, error) {
+	//microseconds
+	Cpu_cfs_quota_us  int64
+	Cpu_cfs_period_us int64
+
+	Time float64
+	Dt   time.Duration
+
+	named bool
+}
+
+const podstatfields = `extract(epoch from time) * 1000 as epoch, dt, name, cpuacct_usage_d, throttled_time_d, total_rss, total_cache, total_mapped_file, memory_limit`
+
+func (s *Store) Get(q PodStatQuery) ([]*podStat, error) {
 	query := `select ` + podstatfields + ` from podstat where time >= to_timestamp($1) and time < to_timestamp($2) and name like $3`
 	rows, err := s.db.Query(query, q.start, q.end, q.name+"%")
 	if err != nil {
@@ -51,9 +75,9 @@ func (s *Store) Get(q PodStatQuery) ([]*PodStat, error) {
 	}
 	defer rows.Close()
 
-	ret := []*PodStat{}
+	ret := []*podStat{}
 	for rows.Next() {
-		p := &PodStat{}
+		p := &podStat{}
 		if err := rows.Scan(
 			&p.Time,
 			&p.Dt,
