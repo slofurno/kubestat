@@ -87,8 +87,30 @@
 
   var nn;
 
+  function doSlice(t, k) {
+      if (k<=0) { return }
+      var t0 = t - 10000
+	    fetch(`/api/stats?start=${t0}&end=${t}`)
+        .then(res => res.json())
+        .then(xs => {
+          let cpus = []
+          for(var i = 0; i < xs.length; i++) {
+            var x = xs[i]
+            if (!(nn = nameLookup[x.Name])) {
+              nn = names.push(x.Name) - 1
+              nameLookup[x.Name] = nn
+            }
+            cpus.push([getTime(x.Time), (x.Total_rss + (x.Total_mapped_file||0))/1000000, nn])
+          }
+          cpu.push_back(cpus)
+          doSlice(t0, k-1)
+        })
+  }
+
   let t = Math.floor(Date.now()/1000)
-	  for (var i = 0; i < 64; t-=10000, i++) {
+  doSlice(t, 64) 
+/*
+	  for (var i = 0; i < 16; t-=10000, i++) {
 	    let xs = await fetch(`/api/stats?start=${t-10000}&end=${t}`).then(res => res.json())
         let cpus = xs.map(x => {
           if (!(nn = nameLookup[x.Name])) {
@@ -99,6 +121,7 @@
         })
       cpu.push_back(cpus)
 	  }
+*/
 
 
 
