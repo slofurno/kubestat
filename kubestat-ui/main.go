@@ -28,12 +28,20 @@ type Hub struct {
 	connections []*Conn
 	mu          sync.Mutex
 	history     [][]byte
+	next        int
 }
 
-var hub = &Hub{
-	connections: []*Conn{},
-	history:     [][]byte{},
-}
+var hub = func() *Hub {
+	empty := []byte("\"[]\"")
+	hub := &Hub{
+		connections: []*Conn{},
+		history:     make([][]byte, broadcastHistory),
+	}
+	for i := 0; i < broadcastHistory; i++ {
+		hub.history[i] = empty
+	}
+	return hub
+}()
 
 func (s *Hub) Add(conn *Conn) func() {
 	s.mu.Lock()
@@ -68,10 +76,8 @@ func (s *Hub) Broadcast(n []byte) {
 		s.connections[i].send <- n
 	}
 
-	s.history = append(s.history, n)
-	if len(s.history) > 300 {
-		s.history = s.history[1:]
-	}
+	s.history[s.next] = n
+	s.next = (s.next + 1) % broadcastHistory
 }
 
 type Conn struct {
@@ -184,10 +190,16 @@ func getPodStats(w http.ResponseWriter, r *http.Request) {
 }
 
 var port string
+var persist bool
+var broadcast bool
+var broadcastHistory int
 var store *Store
 
 func init() {
 	flag.StringVar(&port, "port", "8080", "port")
+	flag.BoolVar(&persist, "persist", false, "persist to postgres")
+	flag.BoolVar(&broadcast, "broadcast", true, "broadcast to websocket")
+	flag.IntVar(&broadcastHistory, "broadcastHistory", 600, "broadcast history buffer size")
 	flag.Parse()
 }
 
@@ -203,13 +215,17 @@ func main() {
 			var xs []PodStat
 			if err := json.Unmarshal(b, &xs); err != nil {
 				log.Println(err)
-				return
+				continue
 			}
 
-			hub.Broadcast(b)
+			if broadcast {
+				hub.Broadcast(b)
+			}
 
-			if err := store.Put(xs); err != nil {
-				log.Println(err)
+			if persist {
+				if err := store.Put(xs); err != nil {
+					log.Println(err)
+				}
 			}
 		}
 	}()
