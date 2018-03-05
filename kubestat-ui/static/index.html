@@ -27,19 +27,15 @@
 </head>
 <body>
   <div id="root">
-    <div>
-      average cpu usage
+    <div style="display: inline-block">
+      <span style="padding: 10px">average cpu usage</span>
       <div id="cpu-use" style="padding: 10px;"></div>
-      <pre id="cpu-use-disp" style="padding: 10px 10px 0 10px; margin: 0px"></pre>
-    </div>
-
-    <div>
-      resident + memory mapped file usage (in MB)
+      <span style="padding: 10px">resident + memory mapped file usage (in MB)</span>
       <div id="resident" style="padding: 10px;"></div>
-      <pre id="resident-disp" style="padding: 10px 10px 0 10px; margin: 0px"></pre>
     </div>
-
-      <pre id="display" style="padding: 10px 10px 0 10px; margin: 0px"></pre>
+    <div style="display: inline-block; vertical-align: top">
+    <pre id="display" style="padding: 10px 10px 0 10px; margin: 0px;"></pre>
+    </div>
 
   </div>
   <script src="index.js"></script>
@@ -59,7 +55,7 @@
           xs.forEach(([t,y,p]) => {
             if (!seen[p]) {
               seen[p] = true
-              uniq.push(`${p}: ${y} (${humanTime(t)})`)
+              uniq.push(`${p}: ${y.toFixed(5)} (${humanTime(t)})`)
             }
           })
           el.innerHTML = uniq.slice(0, 20).join("\n")

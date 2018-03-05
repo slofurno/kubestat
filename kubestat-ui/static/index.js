@@ -97,25 +97,52 @@ function newHeatmap(root, {width, height, onclick, scaleY, scaleX, onmousemove})
       let start = end - scaleX_ * width
 
       //let next = []
+      var buckets = []
 
       for (let i = 0; i < width; i++) {
+          buckets.push({})
           for (let j = 0; j < height; j++) {
               cols[i][j] = []
           }
       }
 
       for (let i = 0; i < series.length; i++) {
-        let t = series[i][0]
+        var t = series[i][0]
         if (t < start) { continue }
 
         //next.push(series[i])
 
         if (t <= end) {
-          let h = Math.min((series[i][1]/scaleY_)|0, height-1)
-          cols[((t-start)/scaleX_)|0][h].push(series[i])
+          var name = series[i][2]
+          var val = series[i][1]
+
+          var k = ((t-start)/scaleX_)|0
+          if(buckets[k][name]) {
+            buckets[k][name].push(series[i])
+          } else {
+            buckets[k][name] = [series[i]]
+          }
         }
       }
 
+      for (var i = 0; i < width; i++) {
+        var bucket = buckets[i]
+        Object.keys(bucket).map(name => {
+          var mt = 0;
+          var mv = 0;
+          var points = bucket[name]
+          points.forEach(([t,v,p]) => {
+            mt += t
+            mv += v
+          })
+
+          let h = Math.min(((mv/points.length)/scaleY_)|0, height-1)
+          cols[i][h].push([mt/points.length, mv/points.length, name])
+        })
+      }
+
+      //let h = Math.min((series[i][1]/scaleY_)|0, height-1)
+      //cols[((t-start)/scaleX_)|0][h].push(series[i])
       //let ranks = rankedsaturation(cols)
       for (let i = 0; i < width; i++){
           let col = cols[i]
