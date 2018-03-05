@@ -27,11 +27,20 @@
 </head>
 <body>
   <div id="root">
-    <div id="cpu-use" style="padding: 10px;"></div>
+    <div>
+      average cpu usage
+      <div id="cpu-use" style="padding: 10px;"></div>
+      <pre id="cpu-use-disp" style="padding: 10px 10px 0 10px; margin: 0px"></pre>
+    </div>
 
-    <div id="throttled-time" style="padding: 10px;"></div>
+    <div>
+      resident + memory mapped file usage (in MB)
+      <div id="resident" style="padding: 10px;"></div>
+      <pre id="resident-disp" style="padding: 10px 10px 0 10px; margin: 0px"></pre>
+    </div>
 
-    <div id="resident" style="padding: 10px;"></div>
+      <pre id="display" style="padding: 10px 10px 0 10px; margin: 0px"></pre>
+
   </div>
   <script src="index.js"></script>
   <script>
@@ -43,6 +52,19 @@
 	      let d = new Date(x)
 	      return d.getTime()
       }
+      function onMoveFor(el) {
+        return function(xs) {
+          let seen = {}
+          let uniq = []
+          xs.forEach(([t,y,p]) => {
+            if (!seen[p]) {
+              seen[p] = true
+              uniq.push(`${p}: ${y} (${humanTime(t)})`)
+            }
+          })
+          el.innerHTML = uniq.slice(0, 20).join("\n")
+        }
+      }
       let onclick = (xs) => xs.slice(0,20).forEach(([t,y,p]) => console.log("%s: %f (%s)", p, y, humanTime(t)))
 
       let hm = newHeatmap(document.getElementById("cpu-use"), {
@@ -50,14 +72,7 @@
           height: 20,
           scaleY: .1,
           scaleX: 5000,
-          onclick: onclick,
-      })
-
-      let thm = newHeatmap(document.getElementById("throttled-time"), {
-          width: 100,
-          height: 20,
-          scaleY: .1,
-          scaleX: 5000,
+          onmousemove: onMoveFor(document.getElementById("display")),
           onclick: onclick,
       })
 
@@ -66,6 +81,7 @@
           height: 20,
           scaleY: 25,
           scaleX: 5000,
+          onmousemove: onMoveFor(document.getElementById("display")),
           onclick: onclick,
       })
 
@@ -75,11 +91,9 @@
         xs.forEach(x => pods[x.Name] = x)
 
         let d1 = xs.map(x => ([getTime(x.Time), x.Cpuacct_usage_d/x.Dt, x.Name]))
-        let d2 = xs.map(x => ([getTime(x.Time), x.Throttled_time_d/x.Dt, x.Name]))
         let d3 = xs.map(x => ([getTime(x.Time), (x.Total_rss + (x.Total_mapped_file||0))/1000000, x.Name]))
 
         hm.push_back(d1)
-        thm.push_back(d2)
         rs.push_back(d3)
       }
 
