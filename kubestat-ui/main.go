@@ -31,17 +31,7 @@ type Hub struct {
 	next        int
 }
 
-var hub = func() *Hub {
-	empty := []byte("\"[]\"")
-	hub := &Hub{
-		connections: []*Conn{},
-		history:     make([][]byte, broadcastHistory),
-	}
-	for i := 0; i < broadcastHistory; i++ {
-		hub.history[i] = empty
-	}
-	return hub
-}()
+var hub *Hub
 
 func (s *Hub) Add(conn *Conn) func() {
 	s.mu.Lock()
@@ -204,6 +194,18 @@ func init() {
 }
 
 func main() {
+  hub = func() *Hub {
+    empty := []byte("[]")
+    hub := &Hub{
+      connections: []*Conn{},
+      history:     make([][]byte, broadcastHistory),
+    }
+    for i := 0; i < broadcastHistory; i++ {
+      hub.history[i] = empty
+    }
+    return hub
+  }()
+
 	var err error
 	store, err = NewPostgresStore("postgres://postgres:postgres@localhost/postgres?sslmode=disable")
 	if err != nil {

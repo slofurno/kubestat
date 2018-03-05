@@ -40,11 +40,18 @@
       const names = []
 
       function getTime(x) {
-        return x;
 	      let d = new Date(x)
 	      return d.getTime()
       }
-      let onclick = (xs) => xs.slice(0,20).forEach(([t,y,p]) => console.log("%s: %f (%s)", names[p], y, humanTime(t)))
+      let onclick = (xs) => xs.slice(0,20).forEach(([t,y,p]) => console.log("%s: %f (%s)", p, y, humanTime(t)))
+
+      let hm = newHeatmap(document.getElementById("cpu-use"), {
+          width: 100,
+          height: 20,
+          scaleY: .1,
+          scaleX: 5000,
+          onclick: onclick,
+      })
 
       let thm = newHeatmap(document.getElementById("throttled-time"), {
           width: 100,
@@ -76,6 +83,9 @@
         rs.push_back(d3)
       }
 
+
+/*
+      let onclick2 = (xs) => xs.slice(0,20).forEach(([t,y,p]) => console.log("%s: %f (%s)", names[p], y, humanTime(t)))
       ;(async function() {
         let cpu = newHeatmap(document.getElementById("cpu-use"), {
           width: 140,
@@ -109,6 +119,7 @@
 
   let t = Math.floor(Date.now()/1000)
   doSlice(t, 64) 
+*/
 /*
 	  for (var i = 0; i < 16; t-=10000, i++) {
 	    let xs = await fetch(`/api/stats?start=${t-10000}&end=${t}`).then(res => res.json())
@@ -126,18 +137,25 @@
 
 
 
-      })()
+//      })()
 
     function humanTime(n) {
       const minute = 1000*60
       const hour = minute*60
       const day = hour*24
-      let dt = Date.now() - n
-      let d = dt/day|0
-      let h = (dt-d*day)/hour|0
-      return d > 0
-        ? `${d}d ${h}h ago`
-        : `${h}h ago`
+      var dt = Date.now() - n
+      var d = dt/day|0
+      var h = (dt-d*day)/hour|0
+      var m = (dt - d*day - h*hour) / minute|0
+      if (d > 0) {
+        return `${d}d ${h}h ago`
+      }
+
+      if (h > 0) {
+        return `${h}h ${m}m ago`
+      }
+
+      return `${m}m ago`
     }
 
   </script>
