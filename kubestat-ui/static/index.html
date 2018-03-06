@@ -34,7 +34,8 @@
       <div id="resident" style="padding: 10px;"></div>
     </div>
     <div style="display: inline-block; vertical-align: top">
-    <pre id="display" style="padding: 10px 10px 0 10px; margin: 0px;"></pre>
+    <div id="display" style="padding: 10px 10px 0 10px; margin: 0px; white-space: pre-wrap; font-family: monospace"/>
+    <pre id="displayw" style="padding: 10px 10px 0 10px; margin: 0px;"></pre>
     </div>
 
   </div>
@@ -67,7 +68,7 @@
           width: 100,
           height: 20,
           scaleY: .1,
-          scaleX: 5000,
+          scaleX: 10000,
           onmousemove: onMoveFor(document.getElementById("display")),
           onclick: onclick,
       })
@@ -75,8 +76,8 @@
       let rs = newHeatmap(document.getElementById("resident"), {
           width: 100,
           height: 20,
-          scaleY: 25,
-          scaleX: 5000,
+          scaleY: 100,
+          scaleX: 10000,
           onmousemove: onMoveFor(document.getElementById("display")),
           onclick: onclick,
       })

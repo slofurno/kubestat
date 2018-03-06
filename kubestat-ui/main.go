@@ -63,7 +63,11 @@ func (s *Hub) Broadcast(n []byte) {
 	defer s.mu.Unlock()
 
 	for i := range s.connections {
-		s.connections[i].send <- n
+    select{
+		case s.connections[i].send <- n:
+    default:
+      fmt.Println("conn blocked")
+    }
 	}
 
 	s.history[s.next] = n
